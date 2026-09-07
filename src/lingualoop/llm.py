@@ -57,24 +57,28 @@ class LLMClient:
         self.model = model
         self.temperature = temperature
 
+        self.client = httpx.AsyncClient(
+            # For now default to 2 min timeout to give the model time to respond
+            timeout=httpx.Timeout(120.0),
+        )
+
     async def chat(
             self,
             messages: list[Message],
     ) -> str:
-        # We need to increase the timeout to allow LM Studio time to load the model and respond
-        timeout = httpx.Timeout(120.0)
-        
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                json={
-                    "model": self.model,
-                    "messages": messages,
-                    "temperature": self.temperature,
-                },
-            )
+        response = await self.client.post(
+            f"{self.base_url}/chat/completions",
+            json={
+                "model": self.model,
+                "messages": messages,
+                "temperature": self.temperature,
+            },
+        )
 
-            response.raise_for_status()
+        response.raise_for_status()
 
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
+
+    async def close(self) -> None:
+        await self.client.aclose()
