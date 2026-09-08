@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
+from lingualoop.conversations import build_messages
 from lingualoop.llm import LLMClient
 from lingualoop.schemas import ChatRequest, ChatResponse
 
@@ -29,12 +30,7 @@ async def chat(
 ) -> ChatResponse:
     llm = http_request.app.state.llm
 
-    messages = [
-        {
-            "role": "user",
-            "content": request.message,
-        }
-    ]
+    messages = build_messages(request.message)
 
     response = await llm.chat(messages)
 
