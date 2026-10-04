@@ -2,6 +2,37 @@
 
 A local, voice-oriented language-learning chatbot for natural daily conversation practice.
 
+## Development workflow
+
+The FastAPI application is defined in `src/lingualoop/main.py`. A chat request
+is validated by the API schema, turned into a system prompt and learner message
+in `conversations.py`, sent to the OpenAI-compatible endpoint by `llm.py`, and
+returned as a response. The endpoint (`http://localhost:1234/v1`) and model
+(`qwen/qwen3.8-27b`) in `main.py` are temporary proof-of-concept values; T06
+will replace them with editable provider settings.
+
+Install the locked project dependencies and run the local server with:
+
+```sh
+uv sync
+uv run uvicorn lingualoop.main:app --reload
+```
+
+Run the offline automated tests with:
+
+```sh
+uv run pytest
+```
+
+The baseline API test uses a fake model client, so it does not need LM Studio or
+any other LLM endpoint. The separate `test_llm.py` script is an opt-in
+integration smoke test; run it explicitly only when the configured local model
+server is available:
+
+```sh
+uv run python test_llm.py
+```
+
 ## Roadmap
 
 ### v0.1 — Text Conversation
