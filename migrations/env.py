@@ -1,5 +1,4 @@
-import os
-from pathlib import Path
+from lingualoop.config import database_path
 
 from logging.config import fileConfig
 
@@ -9,6 +8,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import URL
 
 from alembic import context
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -31,15 +31,7 @@ target_metadata = None
 # ... etc.
 
 def database_url() -> URL:
-    value = os.environ.get("LINGUALOOP_DB_PATH")
-    if not value:
-        raise RuntimeError("Set LINGUALOOP_DB_PATH before running migrations")
-
-    path = Path(value).expanduser()
-    if not path.is_absolute():
-        raise ValueError("LINGUALOOP_DB_PATH must be absolute")
-
-    return URL.create("sqlite+pysqlite", database=str(path))
+    return URL.create("sqlite+pysqlite", database=str(database_path()))
 
 
 def run_migrations_offline() -> None:
