@@ -1,18 +1,22 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from lingualoop.conversations import build_messages
+from lingualoop.api.routes import router
+from lingualoop.database import initialize_database
 from lingualoop.llm import LLMClient
-from lingualoop.schemas import ChatRequest, ChatResponse
-
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize database before FastAPI serves requests
+    app.state.database_path = initialize_database()
+
     app.state.llm = LLMClient(
         base_url="http://localhost:1234/v1",
-        model="qwen/qwen3.8-27b",
+        model="google/gemma-4-e4b",
     )
 
     yield
@@ -20,18 +24,8 @@ async def lifespan(app: FastAPI):
     await app.state.llm.close()
 
 
+web_dir = Path(__file__).resolve().parent / "web"
 
 app = FastAPI(lifespan=lifespan)
-
-@app.post("/api/chat")
-async def chat(
-        request: ChatRequest,
-        http_request: Request,
-) -> ChatResponse:
-    llm = http_request.app.state.llm
-
-    messages = build_messages(request.message)
-
-    response = await llm.chat(messages)
-
-    return ChatResponse(response=response)
+app.include_router(router=router)
+app.mount("/", StaticFiles(directory=web_dir, html=True), name="web")
