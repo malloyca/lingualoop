@@ -1,6 +1,83 @@
 # LinguaLoop
 
-A local, voice-oriented language-learning chatbot for natural daily conversation practice.
+LinguaLoop is a local-first language-learning workspace for deliberate,
+model-assisted practice. It is designed as a personal harness for rebuilding
+and maintaining language ability—not as a structured-course or Duolingo
+replacement.
+
+The learner keeps independent profiles for languages such as Japanese and
+Taiwanese Mandarin, manually records vocabulary and grammar they want to
+practise, and chats with a tutor through a user-configured LLM endpoint. The
+app uses that profile data to make conversation more relevant now and to
+support practice activities later.
+
+## Current direction
+
+The project is in its design/foundation stage.
+
+The guiding idea is:
+
+```text
+Learner profile + manually maintained targets + conversation history
+                              ↓
+                    profile-aware tutor chat
+                              ↓
+          future learner-selected practice activities
+```
+
+## v0.1 — local learner workspace
+
+**Goal:** A useful, persistent local browser application for maintaining
+learner data and having profile-aware text conversations.
+
+The learner can:
+
+- create, edit, select, and archive independent language profiles;
+- manually create, edit, search, and archive vocabulary and grammar targets;
+- configure and test one app-wide OpenAI-compatible text-chat endpoint;
+- start, resume, and browse conversations for a selected profile; and
+- explicitly request a correction review that follows that profile's
+  correction preference.
+
+v0.1 deliberately does **not** include generated daily sessions, flashcards,
+spaced repetition, automatic mistake/target extraction, voice, image-based
+practice, accounts, cloud sync, or a bundled model.
+
+### Initial architecture
+
+```text
+Browser (HTML, CSS, JavaScript)
+             │
+             ▼
+FastAPI API
+             │
+             ▼
+Application / learning-domain services
+  ├── profiles and targets
+  ├── conversations and correction reviews
+  ├── tutor-context construction
+  └── provider configuration
+       │                 │
+       ▼                 ▼
+SQLite repositories   OpenAI-compatible LLM provider
+```
+
+This separation keeps learner logic independent of the browser, FastAPI, and
+the selected model runner. LM Studio is an expected initial local endpoint, but
+the app is not coupled to it. A future managed endpoint or packaged local model
+can implement the same provider boundary.
+
+### Technology choices
+
+- Python and `uv`
+- FastAPI
+- SQLite with versioned migrations
+- HTML, CSS, and modern JavaScript
+- An OpenAI-compatible text-chat API, initially suitable for LM Studio
+
+The first frontend should remain plain and local: a chat workspace plus
+Profiles, Vocabulary, Grammar, and Settings views. A JavaScript framework is
+not a v0.1 requirement.
 
 ## Development workflow
 
@@ -35,162 +112,29 @@ uv run python test_llm.py
 
 ## Roadmap
 
-### v0.1 — Text Conversation
+### v0.2 — learner-selected practice activities
 
-**Goal:** A functional local web chatbot that feels like a language-learning conversation partner.
+Generate a menu of options such as simple target review, guided questions,
+free conversation, and role-play scenarios. Role-play plans will specify the
+situation, learner role, tutor persona, communication goal, and relevant
+targets; the learner chooses an activity rather than receiving a fixed lesson.
 
-* [ ] **Project skeleton**
+### v0.3 — learning signals
 
-  * Python project managed with `uv`
-  * FastAPI application
-  * Basic `/health` endpoint
+Add learner-approved suggestions for vocabulary and grammar targets, record
+activity history and recurring mistakes, and use that information to make
+recommendations more useful.
 
-* [ ] **LLM client**
+### v0.4+ — adaptive multimodal practice
 
-  * Connect to LM Studio's OpenAI-compatible API
-  * Abstract LLM communication behind an `LLMClient`
-  * Verify local model communication
+Add spaced-repetition scheduling, voice, picture/vision activities where the
+configured model supports them, progress views, and model/prompt evaluation.
 
-* [ ] **FastAPI backend**
+## Design principles
 
-  * `/api/chat` endpoint
-  * Pydantic request/response models
-  * Keep application logic separate from web/API code
-
-* [ ] **Web UI**
-
-  * Simple HTML/CSS/JavaScript chat interface
-  * Send and display messages
-
-* [ ] **Streaming**
-
-  * Stream LLM responses from LM Studio → FastAPI → browser
-  * Investigate Server-Sent Events (SSE)
-
-* [ ] **Persistence**
-
-  * SQLite database
-  * Store conversations and messages
-  * Resume conversations after restarting the browser/app
-
-* [ ] **Language-learning behavior**
-
-  * Configurable language/locale
-  * Traditional Chinese / Taiwanese Mandarin as initial configuration
-  * Learner proficiency and correction-level settings
-  * Language-learning system prompt
-
-* [ ] **Correction mode**
-
-  * Analyze recent learner messages on request
-  * Return useful grammar/vocabulary/naturalness corrections
-  * Use structured LLM output where appropriate
-
-**v0.1 milestone:** Have a natural text conversation with the local LLM and optionally ask it to analyze/correct mistakes.
-
----
-
-### v0.2 — Voice Conversation
-
-**Goal:** Make voice interaction a first-class part of the language-learning experience.
-
-#### STT
-
-* [ ] Capture microphone audio in browser
-* [ ] Send audio to backend
-* [ ] Integrate local/appropriate speech-to-text system
-* [ ] Feed transcription into the existing chat pipeline
-
-#### TTS
-
-* [ ] Integrate text-to-speech
-* [ ] Convert LLM responses to audio
-* [ ] Stream/play audio in browser
-
-#### Integration
-
-* [ ] Combine STT → LLM → TTS into a natural conversational loop
-* [ ] Display transcription alongside audio
-* [ ] Handle recording, processing, and playback states
-
-**v0.2 milestone:** Have a spoken conversation with the local language tutor.
-
----
-
-### v0.3 — Learning System
-
-* [ ] Vocabulary tracking
-* [ ] Recurring mistake tracking
-* [ ] Learner profile
-* [ ] Conversation/topic history
-* [ ] Deliberate vocabulary practice
-
-### v0.4+ — Advanced Learning Features
-
-* [ ] Spaced repetition
-* [ ] Progress tracking
-* [ ] Model/prompt evaluation
-* [ ] More sophisticated personalization
-* [ ] Additional languages
-* [ ] Other features driven by actual usage
-
-## Design Principles
-
-* Keep the application **local-first**.
-* Keep the LLM backend replaceable.
-* Keep language-learning logic independent of FastAPI.
-* Prefer simple architecture over premature abstraction.
-* Build each feature as a working vertical slice.
-* Don't build advanced learning features until the basic conversation experience is genuinely useful.
-* Let actual daily use determine future features.
-
-## Initial Architecture
-
-```text
-Browser
-   │
-   ▼
-FastAPI
-   │
-   ├── Conversation / Learning Logic
-   ├── SQLite
-   │
-   └── LLMClient
-          │
-          ▼
-      LM Studio
-          │
-          ▼
-       Local LLM
-```
-
-### v0.2 Extension
-
-```text
-Microphone
-    │
-    ▼
- Browser ──► FastAPI ──► STT
-                         │
-                         ▼
-                   Conversation
-                         │
-                         ▼
-                        LLM
-                         │
-                         ▼
-                        TTS
-                         │
-                         ▼
- Browser ◄──────────── Audio
-```
-
-## Initial Technology Stack
-
-* **Python**
-* **uv**
-* **FastAPI**
-* **SQLite**
-* **HTML / CSS / JavaScript**
-* **LM Studio**
-* Local LLM (initially Qwen or another suitable model)
+- Keep the app local-first and the learner in control of their data.
+- Keep the LLM backend replaceable.
+- Make language-learning logic independent of FastAPI and frontend code.
+- Build working vertical slices instead of premature abstractions.
+- Treat LLM output as fallible; do not silently turn it into learner records.
+- Let actual daily use shape the learning system.

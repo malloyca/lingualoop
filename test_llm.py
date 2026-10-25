@@ -10,14 +10,16 @@ async def main():
         model="qwen/qwen3.8-27b",
     )
 
-    response = await client.chat([
-        {
-            "role": "user",
-            "content": "Say hello in Mandarin Chinese.",
-        }
-    ])
-
-    print(response)
+    try:
+        response = await client.chat([
+            {
+                "role": "user",
+                "content": "Say 'Hello.' in Mandarin Chinese.",
+            }
+        ])
+        print(response)
+    finally:
+        await client.close()
 
 if __name__ == "__main__":
     asyncio.run(main())
